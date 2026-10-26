@@ -1,0 +1,29 @@
+{
+  "name": "nyc_code",
+  "version": "1.0.0",
+  "description": "NYC_code by Kukiat Keakool - LINE Messaging API Push sender for AppSheet, Google Apps Script, and Node.js",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "node -c server.js test.js",
+    "lint": "node -c server.js test.js",
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sunyocopy/NYC_code.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sunyocopy/NYC_code/issues"
+  },
+  "homepage": "https://github.com/sunyocopy/NYC_code#readme",
+  "dependencies": {
+    "axios": "^1.20.0",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0"
+  }
+}

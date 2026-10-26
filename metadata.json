@@ -1,0 +1,7 @@
+{
+  "name": "NYC Code - LINE Push Notification Hub",
+  "description": "LINE Messaging API notification manager and tester for AppSheet, Google Apps Script, and Node.js by Kukiat Keakool.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

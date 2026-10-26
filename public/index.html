@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NYC Code - LINE Push Notification Hub</title>
+  <meta name="description" content="LINE Messaging API notification manager and tester for AppSheet, Google Apps Script, and Node.js by Kukiat Keakool.">
+  <meta property="og:title" content="NYC Code - LINE Push Notification Hub">
+  <meta property="og:description" content="LINE Messaging API notification manager and tester for AppSheet, Google Apps Script, and Node.js by Kukiat Keakool.">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', 'Noto Sans Thai', sans-serif;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .line-green {
+      background-color: #06C755;
+    }
+    .line-green-hover:hover {
+      background-color: #05b04b;
+    }
+    .line-green-border {
+      border-color: #06C755;
+    }
+    .line-green-text {
+      color: #06C755;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-[#06C755] flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-emerald-500/20">
+          LINE
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-white tracking-tight">NYC Code</h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-medium border border-emerald-500/20">v1.0.0</span>
+          </div>
+          <p class="text-xs text-slate-400">LINE Messaging API Push Service by Kukiat Keakool</p>
+        </div>
+      </div>
+
+      <!-- Env Status Indicator -->
+      <div id="envStatusBadge" class="flex items-center gap-3 text-xs bg-slate-800/80 px-3.5 py-1.5 rounded-lg border border-slate-700/80">
+        <span class="text-slate-400">Environment:</span>
+        <span id="tokenStatus" class="flex items-center gap-1.5 text-amber-400 font-medium">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          Checking...
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <div class="border-b border-slate-800 bg-slate-900/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav class="flex space-x-6 overflow-x-auto text-sm font-medium">
+        <button onclick="switchTab('sender')" id="tab-sender" class="py-3 px-1 border-b-2 border-[#06C755] text-white flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-4 h-4 text-[#06C755]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+          Send & Test Message
+        </button>
+        <button onclick="switchTab('history')" id="tab-history" class="py-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          History & Logs (<span id="logCount">0</span>)
+        </button>
+        <button onclick="switchTab('gas')" id="tab-gas" class="py-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+          Apps Script (sendLineNotify.js)
+        </button>
+        <button onclick="switchTab('nodejs')" id="tab-nodejs" class="py-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          Node.js (test.js)
+        </button>
+        <button onclick="switchTab('guide')" id="tab-guide" class="py-3 px-1 border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Setup Guide
+        </button>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- TAB 1: SENDER & TESTER -->
+    <section id="panel-sender" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left: Form -->
+        <div class="lg:col-span-7 bg-slate-950/60 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-5">
+            <div>
+              <h2 class="text-base font-semibold text-white">Push Message Dispatcher</h2>
+              <p class="text-xs text-slate-400">ส่งข้อความผ่าน LINE Messaging API (<code class="text-emerald-400">/v2/bot/message/push</code>)</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">AppSheet / GAS Compatible</span>
+          </div>
+
+          <form id="pushForm" onsubmit="handleSendMessage(event)" class="space-y-5">
+            <!-- Target ID -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label for="targetId" class="block text-xs font-semibold text-slate-300">
+                  Target ID (Group ID / Room ID / User ID) <span class="text-red-400">*</span>
+                </label>
+                <span class="text-xs text-slate-500">e.g. C... or U...</span>
+              </div>
+              <input type="text" id="targetId" name="targetId" required
+                placeholder="เช่น C0123456789abcdef... หรือ U0123456789..."
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition">
+              <p class="mt-1 text-xs text-slate-500" id="targetIdNote">
+                ค่าเริ่มต้นจะดึงมาจาก <code>LINE_TARGET_GROUP_ID</code> ใน .env หากว่างไว้
+              </p>
+            </div>
+
+            <!-- Channel Access Token -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label for="channelToken" class="block text-xs font-semibold text-slate-300">
+                  Channel Access Token
+                </label>
+                <span id="tokenConfigHint" class="text-xs text-slate-500">Auto-filled from .env if present</span>
+              </div>
+              <input type="password" id="channelToken" name="channelToken"
+                placeholder="ใส่ Channel Access Token เพื่อแทนที่ .env (หรือปล่อยว่างถ้าตั้งใน .env แล้ว)"
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition font-mono text-xs">
+            </div>
+
+            <!-- Message Presets -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <label class="block text-xs font-semibold text-slate-300">Quick Templates</label>
+                <span class="text-xs text-slate-500">คลิกเพื่อใส่ข้อความตัวอย่าง</span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="setPreset('default')" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition">
+                  💬 ข้อความทดสอบเดิม
+                </button>
+                <button type="button" onclick="setPreset('appsheet')" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition">
+                  📋 แจ้งเตือน AppSheet
+                </button>
+                <button type="button" onclick="setPreset('alert')" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition">
+                  🚨 แจ้งเตือนด่วน (Alert)
+                </button>
+                <button type="button" onclick="setPreset('job')" class="text-xs px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg border border-slate-700 transition">
+                  📦 สถานะงาน / จัดส่ง
+                </button>
+              </div>
+            </div>
+
+            <!-- Message Text -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label for="messageText" class="block text-xs font-semibold text-slate-300">
+                  Message (ข้อความที่จะส่ง) <span class="text-red-400">*</span>
+                </label>
+                <span id="charCount" class="text-xs text-slate-500">0 / 5000 chars</span>
+              </div>
+              <textarea id="messageText" name="messageText" rows="4" required
+                oninput="updateCharCount()"
+                placeholder="พิมพ์ข้อความที่ต้องการส่งผ่าน LINE Bot..."
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-2">
+              <button type="submit" id="sendBtn"
+                class="w-full line-green line-green-hover text-white font-medium py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg id="sendIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                <span id="btnText">ส่งข้อความ (Push Message)</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right: Real-time Output & Quick Info -->
+        <div class="lg:col-span-5 space-y-6">
+          <!-- Latest Response Card -->
+          <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5 shadow-xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-4">
+              <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                Response Status (สถานะการส่งล่าสุด)
+              </h3>
+              <span id="respBadge" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Idle</span>
+            </div>
+
+            <div id="respContent" class="text-sm text-slate-400 py-6 text-center">
+              ยังไม่มีการส่งข้อความในเซสชันนี้<br>
+              <span class="text-xs text-slate-500">กรอกข้อมูลทางซ้ายแล้วกดปุ่ม "ส่งข้อความ" เพื่อทดสอบ</span>
+            </div>
+          </div>
+
+          <!-- Quick Endpoint & Docs Card -->
+          <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <h3 class="text-sm font-semibold text-white">NYC API Details</h3>
+            
+            <div class="space-y-3 text-xs">
+              <div class="flex flex-col gap-1">
+                <span class="text-slate-400">LINE API Endpoint:</span>
+                <code class="p-2 rounded bg-slate-900 border border-slate-800 text-emerald-400 select-all overflow-x-auto">https://api.line.me/v2/bot/message/push</code>
+              </div>
+
+              <div class="flex flex-col gap-1">
+                <span class="text-slate-400">Local Proxy Endpoint:</span>
+                <code class="p-2 rounded bg-slate-900 border border-slate-800 text-sky-400 select-all overflow-x-auto">POST /api/send</code>
+              </div>
+
+              <div class="pt-2 border-t border-slate-800/80 text-slate-400">
+                💡 <span class="text-slate-300">หมายเหตุ:</span> ฟังก์ชันนี้ใช้งานกับ <b>LINE Messaging API</b> (Push Message) บอทต้องได้รับอนุญาตให้ส่ง Push Message และต้องอยู่ในกลุ่ม (หรือผู้ใช้ต้องแอดบอทเป็นเพื่อน)
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: ACTIVITY HISTORY -->
+    <section id="panel-history" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-white">Execution Logs & History</h2>
+          <p class="text-xs text-slate-400">ประวัติการส่งข้อความทั้งหมดที่บันทึกไว้ในหน่วยความจำ</p>
+        </div>
+        <button onclick="clearLogs()" class="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition">
+          Clear Logs
+        </button>
+      </div>
+
+      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div id="logsTableContainer" class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Time</th>
+                <th class="py-3 px-4">Target ID</th>
+                <th class="py-3 px-4">Message</th>
+                <th class="py-3 px-4">Latency</th>
+                <th class="py-3 px-4">Details</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody" class="divide-y divide-slate-800/60">
+              <tr>
+                <td colspan="6" class="text-center py-8 text-slate-500">No dispatch history recorded yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: APPS SCRIPT -->
+    <section id="panel-gas" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-white">Google Apps Script (sendLineNotify.js)</h2>
+          <p class="text-xs text-slate-400">ฟังก์ชันสำหรับนำไปวางใน Google Apps Script (GAS) เพื่อส่งจาก AppSheet หรือ Google Sheets</p>
+        </div>
+        <button onclick="copyToClipboard('gasCodePre', 'btnCopyGas')" id="btnCopyGas" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          Copy Code
+        </button>
+      </div>
+
+      <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <pre id="gasCodePre" class="text-xs text-slate-300 overflow-x-auto p-4 bg-slate-900 rounded-xl border border-slate-800">Loading code...</pre>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-xs text-slate-400 space-y-2">
+        <h4 class="font-semibold text-slate-200">วิธีนำไปใช้ใน AppSheet:</h4>
+        <ol class="list-decimal list-inside space-y-1 text-slate-400 pl-1">
+          <li>เปิด Google Sheets ที่ผูกกับ AppSheet &rarr; ไปที่เมนู <b>Extensions &gt; Apps Script</b></li>
+          <li>คัดลอกโค้ดด้านบนไปวางในไฟล์ <code>Code.gs</code></li>
+          <li>ใน AppSheet: สร้าง Automation Bot &rarr; Task: <b>Call a script</b> &rarr; เลือกฟังก์ชัน <code>sendLinePushMessage</code></li>
+          <li>ส่งอาร์กิวเมนต์: <code>message</code>, <code>token</code>, <code>targetId</code> ตามฟิลด์ข้อมูลในแอพ</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- TAB 4: NODE.JS -->
+    <section id="panel-nodejs" class="hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-white">Node.js Script (test.js)</h2>
+          <p class="text-xs text-slate-400">สคริปต์ Node.js สำหรับรันเทสจาก command line หรือ server</p>
+        </div>
+        <button onclick="copyToClipboard('nodeCodePre', 'btnCopyNode')" id="btnCopyNode" class="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          Copy Code
+        </button>
+      </div>
+
+      <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <pre id="nodeCodePre" class="text-xs text-slate-300 overflow-x-auto p-4 bg-slate-900 rounded-xl border border-slate-800">Loading code...</pre>
+      </div>
+
+      <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-xs text-slate-400 space-y-2">
+        <h4 class="font-semibold text-slate-200">วิธีรันผ่าน Terminal:</h4>
+        <pre class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-emerald-400">npm test</pre>
+        <p>หรือ <code>node test.js</code> หลังจากตั้งค่า <code>.env</code> เรียบร้อยแล้ว</p>
+      </div>
+    </section>
+
+    <!-- TAB 5: GUIDE -->
+    <section id="panel-guide" class="hidden space-y-6">
+      <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <div>
+          <h2 class="text-base font-semibold text-white">LINE Messaging API Setup Guide</h2>
+          <p class="text-xs text-slate-400">คำแนะนำขั้นตอนการตั้งค่าบอทและตัวแปรสภาพแวดล้อม (.env)</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">1</div>
+            <h4 class="text-sm font-semibold text-white">LINE Developers Console</h4>
+            <p class="text-xs text-slate-400">
+              เข้าสู่ <a href="https://developers.line.biz/" target="_blank" class="text-emerald-400 underline">LINE Developers</a> &rarr; สร้าง Provider &rarr; สร้าง <b>Messaging API channel</b>
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">2</div>
+            <h4 class="text-sm font-semibold text-white">Channel Access Token</h4>
+            <p class="text-xs text-slate-400">
+              ไปที่แท็บ <b>Messaging API</b> &rarr; เลื่อนลงไปที่ <i>Channel access token</i> &rarr; คลิก <b>Issue</b> (Long-lived token)
+            </p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-sm">3</div>
+            <h4 class="text-sm font-semibold text-white">Target Group / User ID</h4>
+            <p class="text-xs text-slate-400">
+              เชิญบอทเข้า Group LINE &rarr; รับ <code>groupId</code> จาก Webhook event หรือใช้ <code>userId</code> ของผู้ใช้งาน
+            </p>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 space-y-3">
+          <h4 class="text-sm font-semibold text-white">ตัวอย่างการตั้งค่าไฟล์ .env</h4>
+          <pre class="text-xs bg-slate-900 p-4 rounded-xl border border-slate-800 text-emerald-300 font-mono select-all">LINE_CHANNEL_ACCESS_TOKEN=eyJhbGciOiJIUzI1NiJ9.xxxxxxxxxxxxxx...
+LINE_TARGET_GROUP_ID=C0123456789abcdef0123456789abcdef
+PORT=3000</pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
+    NYC Code by Kukiat Keakool &bull; Running on Node.js 22 & Express &bull; AI Studio Ready
+  </footer>
+
+  <script>
+    let globalStatus = null;
+
+    const PRESETS = {
+      default: 'ทดสอบการส่งข้อความจาก VS Code ผ่าน LINE Messaging API สวัสดี กู้เกียรติ เกื้อกูล',
+      appsheet: 'แจ้งเตือนจาก AppSheet: มีการบันทึกข้อมูลรายการใหม่เข้าสู่ระบบเรียบร้อยแล้ว\n- รหัสเอกสาร: DOC-2026-001\n- ผู้บันทึก: กู้เกียรติ\n- เวลา: ' + new Date().toLocaleTimeString(),
+      alert: '🚨 แจ้งเตือนด่วน: ตรวจพบสถานะความผิดปกติในระบบ โปรดตรวจสอบโดยทันที',
+      job: '📦 รายงานสถานะคำสั่งซื้อ #NYC-889\nสถานะ: กำลังจัดส่ง\nผู้จัดส่ง: ฝ่ายขนส่ง Niyomchai'
+    };
+
+    function setPreset(type) {
+      const textarea = document.getElementById('messageText');
+      if (PRESETS[type]) {
+        textarea.value = PRESETS[type];
+        updateCharCount();
+      }
+    }
+
+    function updateCharCount() {
+      const text = document.getElementById('messageText').value || '';
+      document.getElementById('charCount').textContent = `${text.length} / 5000 chars`;
+    }
+
+    function switchTab(tab) {
+      ['sender', 'history', 'gas', 'nodejs', 'guide'].forEach(t => {
+        document.getElementById(`panel-${t}`).classList.add('hidden');
+        const tabBtn = document.getElementById(`tab-${t}`);
+        tabBtn.classList.remove('border-[#06C755]', 'text-white');
+        tabBtn.classList.add('border-transparent', 'text-slate-400');
+        const icon = tabBtn.querySelector('svg');
+        if (icon) icon.classList.remove('text-[#06C755]');
+      });
+
+      document.getElementById(`panel-${tab}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-${tab}`);
+      activeBtn.classList.remove('border-transparent', 'text-slate-400');
+      activeBtn.classList.add('border-[#06C755]', 'text-white');
+      const activeIcon = activeBtn.querySelector('svg');
+      if (activeIcon) activeIcon.classList.add('text-[#06C755]');
+
+      if (tab === 'history') loadLogs();
+      if (tab === 'gas' || tab === 'nodejs') loadFiles();
+    }
+
+    async function checkStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        globalStatus = data;
+
+        const tokenBadge = document.getElementById('tokenStatus');
+        if (data.hasToken && data.hasTarget) {
+          tokenBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Configured in .env`;
+          tokenBadge.className = 'flex items-center gap-1.5 text-emerald-400 font-medium';
+        } else if (data.hasToken || data.hasTarget) {
+          tokenBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> Partially Configured`;
+          tokenBadge.className = 'flex items-center gap-1.5 text-amber-400 font-medium';
+        } else {
+          tokenBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-500"></span> Missing .env keys (Manual input mode)`;
+          tokenBadge.className = 'flex items-center gap-1.5 text-slate-400 font-medium';
+        }
+
+        if (data.defaultTargetId && !document.getElementById('targetId').value) {
+          document.getElementById('targetId').value = data.defaultTargetId;
+        }
+
+        if (data.hasToken) {
+          document.getElementById('channelToken').placeholder = `Using .env token (${data.maskedToken}) — Type to override`;
+        }
+      } catch (err) {
+        console.error('Failed to fetch status', err);
+      }
+    }
+
+    async function handleSendMessage(e) {
+      e.preventDefault();
+      const targetId = document.getElementById('targetId').value.trim();
+      const token = document.getElementById('channelToken').value.trim();
+      const message = document.getElementById('messageText').value.trim();
+
+      const sendBtn = document.getElementById('sendBtn');
+      const btnText = document.getElementById('btnText');
+      const respBadge = document.getElementById('respBadge');
+      const respContent = document.getElementById('respContent');
+
+      sendBtn.disabled = true;
+      btnText.textContent = 'กำลังส่งไปยัง LINE API...';
+
+      try {
+        const res = await fetch('/api/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetId, token, message })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          respBadge.textContent = '200 OK (Success)';
+          respBadge.className = 'text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+          respContent.innerHTML = `
+            <div class="space-y-3 text-left">
+              <div class="flex items-center gap-2 text-emerald-400 font-semibold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <span>ส่งข้อความสำเร็จ! (Push Success)</span>
+              </div>
+              <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 font-mono space-y-1">
+                <div><b>Target:</b> ${escapeHtml(targetId)}</div>
+                <div><b>Latency:</b> ${data.log?.durationMs || 0} ms</div>
+                <div><b>Status:</b> ${data.status}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          respBadge.textContent = `${data.status || 400} Error`;
+          respBadge.className = 'text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30';
+          respContent.innerHTML = `
+            <div class="space-y-3 text-left">
+              <div class="flex items-center gap-2 text-red-400 font-semibold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <span>การส่งไม่สำเร็จ (${data.status || 'Error'})</span>
+              </div>
+              <div class="bg-red-950/40 p-3 rounded-xl border border-red-800/40 text-xs text-red-200">
+                <b>ข้อความผิดพลาด:</b> ${escapeHtml(data.error || 'Unknown error')}
+                ${data.details ? `<pre class="mt-2 text-slate-400 bg-slate-900 p-2 rounded text-[11px] overflow-x-auto">${escapeHtml(JSON.stringify(data.details, null, 2))}</pre>` : ''}
+              </div>
+              <p class="text-xs text-slate-400">💡 ตรวจสอบว่าบอทอยู่ในกลุ่มแล้วหรือไม่ หรือ Access Token ถูกต้องและยังไม่หมดอายุ</p>
+            </div>
+          `;
+        }
+
+        loadLogsCount();
+      } catch (err) {
+        respBadge.textContent = 'Network Error';
+        respBadge.className = 'text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30';
+        respContent.innerHTML = `<div class="text-left text-xs text-red-400 p-3 bg-red-950/40 rounded-xl border border-red-800/50">Connection Error: ${escapeHtml(err.message)}</div>`;
+      } finally {
+        sendBtn.disabled = false;
+        btnText.textContent = 'ส่งข้อความ (Push Message)';
+      }
+    }
+
+    async function loadLogsCount() {
+      try {
+        const res = await fetch('/api/logs');
+        const data = await res.json();
+        document.getElementById('logCount').textContent = (data.logs || []).length;
+      } catch (e) {}
+    }
+
+    async function loadLogs() {
+      try {
+        const res = await fetch('/api/logs');
+        const data = await res.json();
+        const logs = data.logs || [];
+        document.getElementById('logCount').textContent = logs.length;
+        const tbody = document.getElementById('logsTableBody');
+
+        if (logs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">No dispatch history recorded yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = logs.map(log => `
+          <tr class="hover:bg-slate-900/60 transition">
+            <td class="py-3 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${log.success ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}">
+                ${log.success ? '200 OK' : (log.statusCode || 'Fail')}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-slate-400 font-mono">${new Date(log.timestamp).toLocaleTimeString()}</td>
+            <td class="py-3 px-4 text-slate-300 font-mono">${escapeHtml(log.targetId)}</td>
+            <td class="py-3 px-4 text-slate-200 max-w-xs truncate" title="${escapeHtml(log.message)}">${escapeHtml(log.message)}</td>
+            <td class="py-3 px-4 text-slate-400 font-mono">${log.durationMs}ms</td>
+            <td class="py-3 px-4 text-slate-400">${log.success ? 'Accepted' : escapeHtml(log.error || '')}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error('Error loading logs', err);
+      }
+    }
+
+    async function clearLogs() {
+      if (!confirm('ต้องการล้างประวัติบันทึกทั้งหมดหรือไม่?')) return;
+      await fetch('/api/logs', { method: 'DELETE' });
+      loadLogs();
+      loadLogsCount();
+    }
+
+    async function loadFiles() {
+      try {
+        const res = await fetch('/api/files');
+        const data = await res.json();
+        if (data.gasCode) document.getElementById('gasCodePre').textContent = data.gasCode;
+        if (data.nodeCode) document.getElementById('nodeCodePre').textContent = data.nodeCode;
+      } catch (err) {
+        console.error('Error loading files', err);
+      }
+    }
+
+    function copyToClipboard(elementId, btnId) {
+      const text = document.getElementById(elementId).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(btnId);
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `✓ Copied!`;
+        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Init
+    window.addEventListener('DOMContentLoaded', () => {
+      setPreset('default');
+      checkStatus();
+      loadLogsCount();
+    });
+  </script>
+</body>
+</html>

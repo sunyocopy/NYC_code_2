@@ -1,11 +1,24 @@
-<div align="center">
+# NYC_code by Kukiat keakool
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+LINE Push Message sender for AppSheet, Google Apps Script (GAS), and Node.js testing.
 
-  <h1>Built with AI Studio</h2>
+## Overview
+This project provides utilities to send push messages using the LINE Messaging API (`https://api.line.me/v2/bot/message/push`).
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+- `sendLineNotify.js`: Google Apps Script (GAS) function for AppSheet / Google Sheets automation.
+- `test.js`: Node.js test script to send test push messages.
+- `server.js`: Web interface and API server running on port 3000 to test and send push messages directly.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## Environment Variables
+Create a `.env` file with:
+```env
+LINE_CHANNEL_ACCESS_TOKEN=your_channel_access_token_here
+LINE_TARGET_GROUP_ID=your_target_group_or_user_id_here
+PORT=3000
+```
 
-</div>
+## Running the Web App
+```bash
+npm install
+npm run dev
+```
